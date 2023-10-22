@@ -1,0 +1,8 @@
+{
+  "values": [
+    "stonewall:stone_wall",
+    "stonewall:cobblestone_wall",
+    "stonewall:moss_stone_wall",
+    "stonewall:sandstone_wall"
+  ]
+}

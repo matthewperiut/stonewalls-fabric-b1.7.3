@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "id": "stonewall",
+  "version": "${version}",
+
+  "name": "Stone Walls",
+  "description": "Adds Stone Walls to Minecraft",
+  "authors": [
+    "Slainlight"
+  ],
+  "contact": {
+    "homepage": "https://glass-launcher.net/",
+    "sources": "https://github.com/calmilamsy/BIN-fabric-example-mod"
+  },
+
+  "license": "CC0-1.0",
+  "icon": "assets/stonewall/icon.png",
+
+  "environment": "*",
+  "entrypoints": {
+    "stationapi:event_bus": [
+      "com.slainlight.stonewall.block.BlockListener",
+      "com.slainlight.stonewall.recipe.RecipeListener"
+    ]
+  },
+  "depends": {
+    "minecraft": "1.0.0-beta.7.3"
+  }
+}

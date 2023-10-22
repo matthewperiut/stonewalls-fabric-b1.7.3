@@ -1,0 +1,6 @@
+{
+  "parent": "stonewall:block/wall_inventory",
+  "textures": {
+    "wall": "minecraft:block/mossy_cobblestone"
+  }
+}

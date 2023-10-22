@@ -1,0 +1,6 @@
+{
+  "parent": "stonewall:block/template_wall_post",
+  "textures": {
+    "wall": "minecraft:block/cobblestone"
+  }
+}
