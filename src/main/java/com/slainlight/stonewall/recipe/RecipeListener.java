@@ -20,6 +20,7 @@ public class RecipeListener {
             CraftingRegistry.addShapedRecipe(new ItemInstance(BlockListener.COBBLESTONE_WALL, 6), "###", "###", '#', BlockBase.COBBLESTONE);
             CraftingRegistry.addShapedRecipe(new ItemInstance(BlockListener.MOSS_STONE_WALL, 6), "###", "###", '#', BlockBase.MOSSY_COBBLESTONE);
             CraftingRegistry.addShapedRecipe(new ItemInstance(BlockListener.SANDSTONE_WALL, 6), "###", "###", '#', BlockBase.SANDSTONE);
+            CraftingRegistry.addShapedRecipe(new ItemInstance(BlockListener.BRICK_WALL, 6), "###", "###", '#', BlockBase.BRICKS);
         }
     }
 }

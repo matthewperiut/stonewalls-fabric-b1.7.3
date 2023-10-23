@@ -4,6 +4,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.BlockBase;
 import net.minecraft.block.material.Material;
+import net.minecraft.entity.EntityBase;
 import net.minecraft.entity.Living;
 import net.minecraft.level.BlockView;
 import net.minecraft.level.Level;
@@ -16,14 +17,25 @@ import net.modificationstation.stationapi.api.state.property.EnumProperty;
 import net.modificationstation.stationapi.api.state.property.Properties;
 import net.modificationstation.stationapi.api.template.block.TemplateBlockBase;
 
+import java.util.List;
+
 public class WallBlock extends TemplateBlockBase
 {
-    private static Level level;
     private static final BooleanProperty UP;
-    public static final EnumProperty<WallShape> EAST_SHAPE;
     public static final EnumProperty<WallShape> NORTH_SHAPE;
     public static final EnumProperty<WallShape> SOUTH_SHAPE;
     public static final EnumProperty<WallShape> WEST_SHAPE;
+    public static final EnumProperty<WallShape> EAST_SHAPE;
+    private static Level level;
+
+    static
+    {
+        UP = Properties.UP;
+        NORTH_SHAPE = WallProperties.NORTH_WALL_SHAPE;
+        SOUTH_SHAPE = WallProperties.SOUTH_WALL_SHAPE;
+        WEST_SHAPE = WallProperties.WEST_WALL_SHAPE;
+        EAST_SHAPE = WallProperties.EAST_WALL_SHAPE;
+    }
 
     public WallBlock(Identifier identifier, Material material)
     {
@@ -33,15 +45,9 @@ public class WallBlock extends TemplateBlockBase
     }
 
     @Override
-    public boolean isFullOpaque()
+    public void appendProperties(StateManager.Builder<BlockBase, BlockState> builder)
     {
-        return false;
-    }
-
-    @Override
-    public boolean isFullCube()
-    {
-        return false;
+        builder.add(UP, NORTH_SHAPE, EAST_SHAPE, WEST_SHAPE, SOUTH_SHAPE);
     }
 
     private boolean canConnect(BlockState block)
@@ -52,10 +58,10 @@ public class WallBlock extends TemplateBlockBase
     public BlockState determineBlockState(Level level, int x, int y, int z)
     {
         boolean up = true;
-        boolean north = canConnect(level.getBlockState(x-1,y,z));
-        boolean south = canConnect(level.getBlockState(x+1,y,z));
-        boolean west = canConnect(level.getBlockState(x,y,z+1));
-        boolean east = canConnect(level.getBlockState(x,y,z-1));
+        boolean north = canConnect(level.getBlockState(x, y, z - 1));
+        boolean south = canConnect(level.getBlockState(x, y, z + 1));
+        boolean west = canConnect(level.getBlockState(x - 1, y, z));
+        boolean east = canConnect(level.getBlockState(x + 1, y, z));
 
         boolean nsWall = north && south && !(west || east);
         boolean weWall = west && east && !(north || south);
@@ -67,28 +73,24 @@ public class WallBlock extends TemplateBlockBase
         boolean tallWest = false;
         boolean tallEast = false;
 
-        if (canUpBeFalse)
+        if (level.getBlockState(x, y + 1, z).getBlock() instanceof WallBlock)
         {
-            if (level.getBlockState(x,y+1,z).getBlock() instanceof WallBlock)
+            if (canUpBeFalse)
             {
                 BlockState above = determineBlockState(level, x, y + 1, z);
                 up = above.get(Properties.UP);
             }
-            else
-            {
-                up = false;
-            }
-        }
 
-        if (level.getBlockState(x,y+1,z).getBlock() instanceof WallBlock)
+            tallNorth = canConnect(level.getBlockState(x, y + 1, z - 1));
+            tallSouth = canConnect(level.getBlockState(x, y + 1, z + 1));
+            tallWest = canConnect(level.getBlockState(x - 1, y + 1, z));
+            tallEast = canConnect(level.getBlockState(x + 1, y + 1, z));
+        } else
         {
-            tallNorth = canConnect(level.getBlockState(x-1,y+1,z));
-            tallSouth = canConnect(level.getBlockState(x+1,y+1,z));
-            tallWest = canConnect(level.getBlockState(x,y+1,z+1));
-            tallEast = canConnect(level.getBlockState(x,y+1,z-1));
+            up = !canUpBeFalse;
         }
 
-        if (level.getBlockState(x,y+1,z).getBlock().isFullCube())
+        if (level.getBlockState(x, y + 1, z).getBlock().isFullCube())
         {
             tallNorth = true;
             tallSouth = true;
@@ -106,76 +108,104 @@ public class WallBlock extends TemplateBlockBase
     @Override
     public void onAdjacentBlockUpdate(Level level, int x, int y, int z, int l)
     {
-        WallBlock.level = level;
-        level.setBlockState(x,y,z,determineBlockState(level,x,y,z));
+        level.setBlockState(x, y, z, determineBlockState(level, x, y, z));
 
-        if (level.getBlockState(x,y-1,z).getBlock() instanceof WallBlock wallBlock)
+        if (level.getBlockState(x, y - 1, z).getBlock() instanceof WallBlock wallBlock)
         {
-            wallBlock.onAdjacentBlockUpdate(level, x, y-1, z, 0);
+            wallBlock.onAdjacentBlockUpdate(level, x, y - 1, z, 0);
         }
 
         super.onAdjacentBlockUpdate(level, x, y, z, l);
     }
 
     @Override
-    public void afterPlaced(Level level, int x, int y, int z, Living living) {
-        WallBlock.level = level;
-        level.setBlockState(x,y,z,determineBlockState(level,x,y,z));
+    public void afterPlaced(Level level, int x, int y, int z, Living living)
+    {
+        if (level.getBlockState(x, y, z).getBlock() instanceof WallBlock)
+            level.setBlockState(x, y, z, determineBlockState(level, x, y, z));
+    }
+
+    protected Box getShape(BlockState block, boolean collider, boolean bounding)
+    {
+        if (!(block.getBlock() instanceof WallBlock))
+            return Box.create(0.F, 0.F, 0.F, 1.F, 1.F, 1.F);
+        if (block.get(Properties.UP))
+        {
+            if (bounding)
+            {
+                boolean north = !block.get(NORTH_SHAPE).equals(WallShape.NONE);
+                boolean south = !block.get(SOUTH_SHAPE).equals(WallShape.NONE);
+                boolean west = !block.get(WEST_SHAPE).equals(WallShape.NONE);
+                boolean east = !block.get(EAST_SHAPE).equals(WallShape.NONE);
+                return Box.create(west ? 0.F : 0.25, 0.F, north ? 0.F : 0.25F, east ? 1.F : 0.75F, collider ? 1.5F : 1.F, south ? 1.F : 0.75F);
+            }
+            return Box.create(0.25, 0.F, 0.25F, 0.75F, collider ? 1.5F : 1.F, 0.75F);
+        } else
+        {
+            if (!block.get(EAST_SHAPE).equals(WallShape.NONE) && !block.get(WEST_SHAPE).equals(WallShape.NONE))
+            {
+                boolean tall = block.get(EAST_SHAPE).equals(WallShape.TALL) && block.get(WEST_SHAPE).equals(WallShape.TALL);
+                return Box.create(0.F, 0.F, 0.3125F, 1.F, collider ? 1.5F : (tall ? 1.F : 0.875F), 0.6875);
+            } else
+            {
+                boolean tall = block.get(NORTH_SHAPE).equals(WallShape.TALL) && block.get(SOUTH_SHAPE).equals(WallShape.TALL);
+                return Box.create(0.3125, 0.F, 0.F, 0.6875, collider ? 1.5F : (tall ? 1.F : 0.875F), 1.F);
+            }
+        }
+    }
+
+    protected Box addBasePos(Box box, int x, int y, int z)
+    {
+        box.minX += x;
+        box.minY += y;
+        box.minZ += z;
+        box.maxX += x;
+        box.maxY += y;
+        box.maxZ += z;
+
+        return box;
     }
 
     @Override
-    public void appendProperties(StateManager.Builder<BlockBase, BlockState> builder) {
-        builder.add(UP, NORTH_SHAPE, EAST_SHAPE, WEST_SHAPE, SOUTH_SHAPE);
-    }
-
-    @Override
-    public Box getCollisionShape(Level arg, int i, int j, int k) {
-        return Box.create((double)i+0.25, j, (double)k+0.25, (double)i + 0.75, (double)j + 1.5F, (double)k + 0.75);
+    public Box getCollisionShape(Level arg, int i, int j, int k)
+    {
+        return addBasePos(getShape(arg.getBlockState(i, j, k), true, false), i, j, k);
     }
 
     @Environment(EnvType.CLIENT)
     @Override
-    public Box getOutlineShape(Level arg, int i, int j, int k) {
-
-        BlockState block = arg.getBlockState(i,j,k);
-        if (block.get(UP))
-            return Box.create((double)i+0.25, j, (double)k+0.25, (double)i + 0.75, (double)j + 1.F, (double)k + 0.75);
-        else
-        {
-            if (!block.get(EAST_SHAPE).equals(WallShape.NONE) && !block.get(WEST_SHAPE).equals(WallShape.NONE))
-            {
-                return Box.create((double)i+0.3125, j, k, (double)i + 0.6875, (double)j + 0.875F, (double)k + 1.F);
-            }
-            else
-            {
-                return Box.create(i, j, (double)k+0.3125, (double)i + 1.F, (double)j + 0.875F, (double)k + 0.6875);
-            }
-        }
+    public Box getOutlineShape(Level arg, int i, int j, int k)
+    {
+        WallBlock.level = arg;
+        return addBasePos(getShape(arg.getBlockState(i, j, k), false, false), i, j, k);
     }
 
     @Override
     public void updateBoundingBox(BlockView arg, int i, int j, int k)
     {
-        setBoundingBox(0.25F, 0.0F, 0.25F, 0.75F, 1.0F, 0.75F);
         if (level != null)
         {
-            BlockState block = level.getBlockState(i,j,k);
-            if (!block.get(EAST_SHAPE).equals(WallShape.NONE) && !block.get(WEST_SHAPE).equals(WallShape.NONE))
-            {
-                setBoundingBox(0.3125F, 0.F, 0.F, 0.6875F, 0.875F, 1.F);
-            }
-            else
-            {
-                setBoundingBox(0.F, 0.F, 0.3125F, 1.F, 0.875F, 0.6875F);
-            }
+            Box box = getShape(level.getBlockState(i, j, k), false, true);
+            setBoundingBox((float) box.minX, (float) box.minY, (float) box.minZ, (float) box.maxX, (float) box.maxY, (float) box.maxZ);
         }
     }
 
-    static {
-        UP = Properties.UP;
-        EAST_SHAPE = WallProperties.EAST_WALL_SHAPE;
-        NORTH_SHAPE = WallProperties.NORTH_WALL_SHAPE;
-        SOUTH_SHAPE = WallProperties.SOUTH_WALL_SHAPE;
-        WEST_SHAPE = WallProperties.WEST_WALL_SHAPE;
+    @Override
+    public boolean canPlaceAt(Level arg, int i, int j, int k)
+    {
+        List list = arg.getEntities(EntityBase.class, Box.create(i, j, k, i + 1.F, j + 1.5F, k + 1.F));
+        return list.size() == 0;
+    }
+
+    @Override
+    public boolean isFullOpaque()
+    {
+        return false;
+    }
+
+    @Override
+    public boolean isFullCube()
+    {
+        return false;
     }
 }
