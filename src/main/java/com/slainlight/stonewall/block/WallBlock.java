@@ -5,6 +5,7 @@ import net.fabricmc.api.Environment;
 import net.minecraft.block.BlockBase;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.Living;
+import net.minecraft.level.BlockView;
 import net.minecraft.level.Level;
 import net.minecraft.util.maths.Box;
 import net.modificationstation.stationapi.api.block.BlockState;
@@ -17,6 +18,7 @@ import net.modificationstation.stationapi.api.template.block.TemplateBlockBase;
 
 public class WallBlock extends TemplateBlockBase
 {
+    private static Level level;
     private static final BooleanProperty UP;
     public static final EnumProperty<WallShape> EAST_SHAPE;
     public static final EnumProperty<WallShape> NORTH_SHAPE;
@@ -27,6 +29,19 @@ public class WallBlock extends TemplateBlockBase
     {
         super(identifier, material);
         setDefaultState(getStateManager().getDefaultState().with(UP, true).with(NORTH_SHAPE, WallShape.NONE).with(EAST_SHAPE, WallShape.NONE).with(SOUTH_SHAPE, WallShape.NONE).with(WEST_SHAPE, WallShape.NONE));
+        setBoundingBox(0.25F, 0.0F, 0.25F, 0.75F, 1.0F, 0.75F);
+    }
+
+    @Override
+    public boolean isFullOpaque()
+    {
+        return false;
+    }
+
+    @Override
+    public boolean isFullCube()
+    {
+        return false;
     }
 
     private boolean canConnect(BlockState block)
@@ -91,6 +106,7 @@ public class WallBlock extends TemplateBlockBase
     @Override
     public void onAdjacentBlockUpdate(Level level, int x, int y, int z, int l)
     {
+        WallBlock.level = level;
         level.setBlockState(x,y,z,determineBlockState(level,x,y,z));
 
         if (level.getBlockState(x,y-1,z).getBlock() instanceof WallBlock wallBlock)
@@ -103,24 +119,13 @@ public class WallBlock extends TemplateBlockBase
 
     @Override
     public void afterPlaced(Level level, int x, int y, int z, Living living) {
+        WallBlock.level = level;
         level.setBlockState(x,y,z,determineBlockState(level,x,y,z));
     }
 
     @Override
     public void appendProperties(StateManager.Builder<BlockBase, BlockState> builder) {
         builder.add(UP, NORTH_SHAPE, EAST_SHAPE, WEST_SHAPE, SOUTH_SHAPE);
-    }
-
-    @Override
-    public boolean isFullOpaque()
-    {
-        return false;
-    }
-
-    @Override
-    public boolean isFullCube()
-    {
-        return false;
     }
 
     @Override
@@ -144,6 +149,24 @@ public class WallBlock extends TemplateBlockBase
             else
             {
                 return Box.create(i, j, (double)k+0.3125, (double)i + 1.F, (double)j + 0.875F, (double)k + 0.6875);
+            }
+        }
+    }
+
+    @Override
+    public void updateBoundingBox(BlockView arg, int i, int j, int k)
+    {
+        setBoundingBox(0.25F, 0.0F, 0.25F, 0.75F, 1.0F, 0.75F);
+        if (level != null)
+        {
+            BlockState block = level.getBlockState(i,j,k);
+            if (!block.get(EAST_SHAPE).equals(WallShape.NONE) && !block.get(WEST_SHAPE).equals(WallShape.NONE))
+            {
+                setBoundingBox(0.3125F, 0.F, 0.F, 0.6875F, 0.875F, 1.F);
+            }
+            else
+            {
+                setBoundingBox(0.F, 0.F, 0.3125F, 1.F, 0.875F, 0.6875F);
             }
         }
     }
