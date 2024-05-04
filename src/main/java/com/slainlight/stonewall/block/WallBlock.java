@@ -2,13 +2,13 @@ package com.slainlight.stonewall.block;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.block.BlockBase;
-import net.minecraft.block.material.Material;
-import net.minecraft.entity.EntityBase;
-import net.minecraft.entity.Living;
-import net.minecraft.level.BlockView;
-import net.minecraft.level.Level;
-import net.minecraft.util.maths.Box;
+import net.minecraft.block.Block;
+import net.minecraft.block.Material;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.util.math.Box;
+import net.minecraft.world.BlockView;
+import net.minecraft.world.World;
 import net.modificationstation.stationapi.api.block.BlockState;
 import net.modificationstation.stationapi.api.state.StateManager;
 import net.modificationstation.stationapi.api.state.property.BooleanProperty;
@@ -26,7 +26,7 @@ public class WallBlock extends TemplateBlock
     public static final EnumProperty<WallShape> SOUTH_SHAPE;
     public static final EnumProperty<WallShape> WEST_SHAPE;
     public static final EnumProperty<WallShape> EAST_SHAPE;
-    private static Level level;
+    private static World world;
 
     static
     {
@@ -45,7 +45,7 @@ public class WallBlock extends TemplateBlock
     }
 
     @Override
-    public void appendProperties(StateManager.Builder<BlockBase, BlockState> builder)
+    public void appendProperties(StateManager.Builder<Block, BlockState> builder)
     {
         builder.add(UP, NORTH_SHAPE, EAST_SHAPE, WEST_SHAPE, SOUTH_SHAPE);
     }
@@ -55,13 +55,13 @@ public class WallBlock extends TemplateBlock
         return block.getBlock().isFullCube() || block.getBlock() instanceof WallBlock;
     }
 
-    public BlockState determineBlockState(Level level, int x, int y, int z)
+    public BlockState determineBlockState(World world, int x, int y, int z)
     {
         boolean up = true;
-        boolean north = canConnect(level.getBlockState(x, y, z - 1));
-        boolean south = canConnect(level.getBlockState(x, y, z + 1));
-        boolean west = canConnect(level.getBlockState(x - 1, y, z));
-        boolean east = canConnect(level.getBlockState(x + 1, y, z));
+        boolean north = canConnect(world.getBlockState(x, y, z - 1));
+        boolean south = canConnect(world.getBlockState(x, y, z + 1));
+        boolean west = canConnect(world.getBlockState(x - 1, y, z));
+        boolean east = canConnect(world.getBlockState(x + 1, y, z));
 
         boolean nsWall = north && south && !(west || east);
         boolean weWall = west && east && !(north || south);
@@ -73,24 +73,24 @@ public class WallBlock extends TemplateBlock
         boolean tallWest = false;
         boolean tallEast = false;
 
-        if (level.getBlockState(x, y + 1, z).getBlock() instanceof WallBlock)
+        if (world.getBlockState(x, y + 1, z).getBlock() instanceof WallBlock)
         {
             if (canUpBeFalse)
             {
-                BlockState above = determineBlockState(level, x, y + 1, z);
+                BlockState above = determineBlockState(world, x, y + 1, z);
                 up = above.get(Properties.UP);
             }
 
-            tallNorth = canConnect(level.getBlockState(x, y + 1, z - 1));
-            tallSouth = canConnect(level.getBlockState(x, y + 1, z + 1));
-            tallWest = canConnect(level.getBlockState(x - 1, y + 1, z));
-            tallEast = canConnect(level.getBlockState(x + 1, y + 1, z));
+            tallNorth = canConnect(world.getBlockState(x, y + 1, z - 1));
+            tallSouth = canConnect(world.getBlockState(x, y + 1, z + 1));
+            tallWest = canConnect(world.getBlockState(x - 1, y + 1, z));
+            tallEast = canConnect(world.getBlockState(x + 1, y + 1, z));
         } else
         {
             up = !canUpBeFalse;
         }
 
-        if (level.getBlockState(x, y + 1, z).getBlock().isFullCube())
+        if (world.getBlockState(x, y + 1, z).getBlock().isFullCube())
         {
             tallNorth = true;
             tallSouth = true;
@@ -106,23 +106,23 @@ public class WallBlock extends TemplateBlock
     }
 
     @Override
-    public void onAdjacentBlockUpdate(Level level, int x, int y, int z, int l)
+    public void neighborUpdate(World world, int x, int y, int z, int l)
     {
-        level.setBlockState(x, y, z, determineBlockState(level, x, y, z));
+        world.setBlockState(x, y, z, determineBlockState(world, x, y, z));
 
-        if (level.getBlockState(x, y - 1, z).getBlock() instanceof WallBlock wallBlock)
+        if (world.getBlockState(x, y - 1, z).getBlock() instanceof WallBlock wallBlock)
         {
-            wallBlock.onAdjacentBlockUpdate(level, x, y - 1, z, 0);
+            wallBlock.neighborUpdate(world, x, y - 1, z, 0);
         }
 
-        super.onAdjacentBlockUpdate(level, x, y, z, l);
+        super.neighborUpdate(world, x, y, z, l);
     }
 
     @Override
-    public void afterPlaced(Level level, int x, int y, int z, Living living)
+    public void onPlaced(World world, int x, int y, int z, LivingEntity living)
     {
-        if (level.getBlockState(x, y, z).getBlock() instanceof WallBlock)
-            level.setBlockState(x, y, z, determineBlockState(level, x, y, z));
+        if (world.getBlockState(x, y, z).getBlock() instanceof WallBlock)
+            world.setBlockState(x, y, z, determineBlockState(world, x, y, z));
     }
 
     protected Box getShape(BlockState block, boolean collider, boolean bounding)
@@ -167,38 +167,39 @@ public class WallBlock extends TemplateBlock
     }
 
     @Override
-    public Box getCollisionShape(Level arg, int i, int j, int k)
+    public Box getCollisionShape(World world, int i, int j, int k)
     {
-        return addBasePos(getShape(arg.getBlockState(i, j, k), true, false), i, j, k);
+        return addBasePos(getShape(world.getBlockState(i, j, k), true, false), i, j, k);
     }
 
     @Environment(EnvType.CLIENT)
     @Override
-    public Box getOutlineShape(Level arg, int i, int j, int k)
+    public Box getBoundingBox(World arg, int i, int j, int k)
     {
-        WallBlock.level = arg;
+        WallBlock.world = arg;
         return addBasePos(getShape(arg.getBlockState(i, j, k), false, false), i, j, k);
     }
 
     @Override
     public void updateBoundingBox(BlockView arg, int i, int j, int k)
     {
-        if (level != null)
+        if (world != null)
         {
-            Box box = getShape(level.getBlockState(i, j, k), false, true);
+            Box box = getShape(world.getBlockState(i, j, k), false, true);
             setBoundingBox((float) box.minX, (float) box.minY, (float) box.minZ, (float) box.maxX, (float) box.maxY, (float) box.maxZ);
         }
     }
 
     @Override
-    public boolean canPlaceAt(Level arg, int i, int j, int k)
+    public boolean canPlaceAt(World world, int i, int j, int k)
     {
-        List list = arg.getEntities(EntityBase.class, Box.create(i, j, k, i + 1.F, j + 1.5F, k + 1.F));
+        // method_175 is get entities by class
+        List list = world.method_175(Entity.class, Box.create(i, j, k, i + 1.F, j + 1.5F, k + 1.F));
         return list.size() == 0;
     }
 
     @Override
-    public boolean isFullOpaque()
+    public boolean isOpaque()
     {
         return false;
     }

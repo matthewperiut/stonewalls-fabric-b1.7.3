@@ -1,5 +1,5 @@
 plugins {
-	id 'babric-loom' version '1.1.7'
+	id 'babric-loom' version '1.4.2'
 	id 'maven-publish'
 }
 
@@ -11,32 +11,47 @@ version = project.mod_version
 group = project.maven_group
 
 loom {
+	mixin {
+		useLegacyMixinAp = true
+	}
 	gluedMinecraftJar()
 	customMinecraftManifest.set("https://babric.github.io/manifest-polyfill/${minecraft_version}.json")
+	intermediaryUrl.set("https://maven.glass-launcher.net/babric/babric/intermediary/%1\$s/intermediary-%1\$s-v2.jar")
 }
 
 repositories {
-	maven {
-		name = 'Froge'
-		url = 'https://maven.minecraftforge.net/'
-	}
+	// Add repositories to retrieve artifacts from in here.
+	// You should only use this when depending on other mods because
+	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
+	// See https://docs.gradle.org/current/userguide/declaring_repositories.html
+	// for more information about repositories.
+
+	// Used for the fabric toolchain in this project.
 	maven {
 		name = 'Babric'
 		url = 'https://maven.glass-launcher.net/babric'
 	}
-	maven {
-		name = 'Glass Snapshots'
-		url = 'https://maven.glass-launcher.net/snapshots'
-	}
+	// Used for mappings.
 	maven {
 		name = 'Glass Releases'
 		url = 'https://maven.glass-launcher.net/releases'
 	}
+	// Used for StationAPI and HowManyItems.
+	maven {
+		name = 'Glass Snapshots'
+		url = 'https://maven.glass-launcher.net/snapshots'
+	}
+	// Used for a StationAPI dependency.
+	maven {
+		name = 'Froge'
+		url 'https://maven.minecraftforge.net/'
+	}
+	// Used for projects that do not have a maven repository, but do have a GitHub repository with working build scripts.
 	maven {
 		name = 'Jitpack'
-		url = 'https://jitpack.io/'
+		url = 'https://jitpack.io'
 	}
-	mavenCentral()
+	// Used for another StationAPI dependency
 	exclusiveContent {
 		forRepository {
 			maven {
@@ -48,33 +63,34 @@ repositories {
 			includeGroup "maven.modrinth"
 		}
 	}
+	mavenCentral()
 }
 
 dependencies {
 	// To change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings "net.glasslauncher:bin:${project.yarn_mappings}"
+	mappings "net.glasslauncher:biny:${project.yarn_mappings}:v2"
 	modImplementation "babric:fabric-loader:${project.loader_version}"
 
 	implementation "org.slf4j:slf4j-api:1.8.0-beta4"
 	implementation 'org.apache.logging.log4j:log4j-slf4j18-impl:2.17.2'
+	implementation("io.github.llamalad7:mixinextras-fabric:${mixinextras_version}")
+	annotationProcessor("io.github.llamalad7:mixinextras-fabric:${mixinextras_version}")
+	implementation "blue.endless:jankson:1.2.1"
 
 	modImplementation "net.modificationstation:StationAPI:${project.stapi_version}"
+	modImplementation("net.glasslauncher.mods:GlassConfigAPI:${project.gcapi_version}") { transitive false }
+	modImplementation("com.github.calmilamsy:ModMenu:${project.modmenu_version}") { transitive false }
+	modImplementation("com.github.matthewperiut:spc-babric:${spc_version}") { transitive false }
+	modImplementation("net.glasslauncher:HowManyItems-Fabric-Unofficial:${project.howmanyitems_version}") {transitive false }
+	modImplementation("com.github.paulevsGitch:BHCreative:${project.bhcreative_version}") { transitive false }
 
-	// Optional, but convenient mods for mod creators and users alike.
-	implementation "blue.endless:jankson:1.2.1"
-	modImplementation("com.github.calmilamsy:ModMenu:${project.modmenu_version}") {
-		transitive false
-	}
-	modImplementation("net.glasslauncher.mods:GlassConfigAPI:${project.gcapi_version}") {
-		transitive false
-	}
-	modImplementation("net.glasslauncher:HowManyItems-Fabric-Unofficial:${project.howmanyitems_version}") {
-		transitive false
-	}
-	modImplementation("com.github.matthewperiut:spc-babric:${project.spc_version}") {
-		transitive false
-	}
+	// Runtime Dependencies
+	modRuntimeOnly "com.github.GeyserMC:MCAuthLib:d9d773e5d50327c33898c65cd545a4f6ef3ba1b5" // needed for mojang fix
+	modRuntimeOnly ("maven.modrinth:mojangfix-stationapi-edition:${mojang_fix_stapi_version}") { transitive false }
+	modRuntimeOnly ("com.github.matthewperiut:gambac:${gambac_version}") { transitive false }
+	modRuntimeOnly ("com.github.matthewperiut:thirdpersonfix-fabric-b1.7.3:82717b1f41") { transitive false }
+	modRuntimeOnly ("com.github.matthewperiut:stapi-fast-intro:d2eeeb0e57") { transitive false }
 }
 
 processResources {
