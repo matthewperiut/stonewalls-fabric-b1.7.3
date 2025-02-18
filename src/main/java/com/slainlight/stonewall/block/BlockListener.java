@@ -5,14 +5,12 @@ import net.minecraft.block.Block;
 import net.minecraft.block.Material;
 import net.minecraft.sound.BlockSoundGroup;
 import net.modificationstation.stationapi.api.event.registry.BlockRegistryEvent;
-import net.modificationstation.stationapi.api.mod.entrypoint.Entrypoint;
 import net.modificationstation.stationapi.api.util.Identifier;
 import net.modificationstation.stationapi.api.util.Namespace;
 import net.modificationstation.stationapi.api.util.Null;
 
 public class BlockListener {
-    @Entrypoint.Namespace
-    public static final Namespace MOD_ID = Null.get();
+    public static final Namespace MOD_ID = Namespace.resolve();
 
     public static Block STONE_WALL;
     public static Block COBBLESTONE_WALL;
