@@ -21,6 +21,9 @@
     "stationapi:event_bus": [
       "com.slainlight.stonewall.block.BlockListener",
       "com.slainlight.stonewall.recipe.RecipeListener"
+    ],
+    "bhcreative:event_bus": [
+      "com.slainlight.stonewall.BHCreativeSupport"
     ]
   },
   "depends": {

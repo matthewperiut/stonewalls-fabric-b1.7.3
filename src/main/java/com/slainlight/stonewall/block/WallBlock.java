@@ -3,7 +3,7 @@ package com.slainlight.stonewall.block;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.Block;
-import net.minecraft.block.Material;
+import net.minecraft.block.material.Material;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.util.math.Box;
@@ -194,7 +194,7 @@ public class WallBlock extends TemplateBlock
     public boolean canPlaceAt(World world, int i, int j, int k)
     {
         // method_175 is get entities by class
-        List list = world.method_175(Entity.class, Box.create(i, j, k, i + 1.F, j + 1.5F, k + 1.F));
+        List list = world.collectEntitiesByClass(Entity.class, Box.create(i, j, k, i + 1.F, j + 1.5F, k + 1.F));
         return list.size() == 0;
     }
 
