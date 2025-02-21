@@ -13,7 +13,7 @@ public class BHCreativeSupport {
 
     @EventListener
     public void onTabInit(TabRegistryEvent event){
-        tabStonewall = new SimpleTab(BlockListener.MOD_ID.id("claydoll"), BlockListener.STONE_WALL.asItem());
+        tabStonewall = new SimpleTab(BlockListener.MOD_ID.id("stone_wall"), BlockListener.STONE_WALL.asItem());
         event.register(tabStonewall);
         for (Block block : BlockListener.blocks){
             tabStonewall.addItem(new ItemStack(block.asItem(), 1));
