@@ -21,9 +21,18 @@
     "stationapi:event_bus": [
       "com.slainlight.stonewall.block.BlockListener",
       "com.slainlight.stonewall.recipe.RecipeListener"
+    ],
+    "bhcreative:event_bus": [
+      "com.slainlight.stonewall.BHCreativeSupport"
     ]
   },
+
   "depends": {
-    "minecraft": "1.0.0-beta.7.3"
+    "minecraft": "1.0.0-beta.7.3",
+    "stationapi": ">=2.0.0-alpha.3"
+  },
+
+  "recommends": {
+    "modmenu": "*"
   }
 }

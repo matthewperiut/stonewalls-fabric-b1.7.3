@@ -1,5 +1,7 @@
-tile.stone_wall.name=Stone Wall
-tile.cobblestone_wall.name=Cobblestone Wall
-tile.moss_stone_wall.name=Moss Stone Wall
-tile.sandstone_wall.name=Sandstone Wall
-tile.brick_wall.name=Brick Wall
+tab.@.stone_wall.name=Stone Walls
+
+tile.@.stone_wall.name=Stone Wall
+tile.@.cobblestone_wall.name=Cobblestone Wall
+tile.@.moss_stone_wall.name=Moss Stone Wall
+tile.@.sandstone_wall.name=Sandstone Wall
+tile.@.brick_wall.name=Brick Wall
